@@ -8,3 +8,17 @@ and(
     formatDateTime(addMonths(utcNow(), -1),'yyyy')
   )
 )
+
+
+
+
+
+convertFromUtc(formatDateTime(concat('01-', trim(items('Apply_to_each')?['DueDate'])),'yyyy-MM-dd'),'UTC','yyyy-MM-dd')
+
+
+
+
+and(
+  equals(formatDateTime(outputs('ParseDueDate'),'MM'), formatDateTime(addToTime(utcNow(), -1, 'Month'),'MM')),
+  equals(formatDateTime(outputs('ParseDueDate'),'yyyy'), formatDateTime(addToTime(utcNow(), -1, 'Month'),'yyyy'))
+)
