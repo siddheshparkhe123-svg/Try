@@ -1,18 +1,10 @@
 and(
   equals(
-    if(
-      contains(string(items('Apply_to_each')?['DueDate']), '-'),
-      formatDateTime(concat('01-', trim(string(items('Apply_to_each')?['DueDate']))),'MM'),
-      formatDateTime(items('Apply_to_each')?['DueDate'],'MM')
-    ),
+    formatDateTime(concat('01-', trim(items('Apply_to_each')?['DueDate'])),'MM'),
     formatDateTime(addMonths(utcNow(), -1),'MM')
   ),
   equals(
-    if(
-      contains(string(items('Apply_to_each')?['DueDate']), '-'),
-      formatDateTime(concat('01-', trim(string(items('Apply_to_each')?['DueDate']))),'yyyy'),
-      formatDateTime(items('Apply_to_each')?['DueDate'],'yyyy')
-    ),
+    formatDateTime(concat('01-', trim(items('Apply_to_each')?['DueDate'])),'yyyy'),
     formatDateTime(addMonths(utcNow(), -1),'yyyy')
   )
 )
