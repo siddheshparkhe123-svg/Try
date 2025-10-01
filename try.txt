@@ -1,14 +1,10 @@
-lessOrEquals(
-    addDays(
-        utcNow(),
-        -30
-    ),
-    convertTimeZone(
-        formatDateTime(
-            substring(outputs('Compose'), 6, 4) & '-' &  substring(outputs('Compose'), 3, 2) & '-' & substring(outputs('Compose'), 0, 2),
-            'yyyy-MM-dd'
-        ),
-        'UTC',
-        'UTC'
+less(
+    addDays(utcNow(), -30),
+    parseDateTime(
+        concat(
+            substring(outputs('Compose'),6,4), '-',      // yyyy
+            substring(outputs('Compose'),3,2), '-',      // MM
+            substring(outputs('Compose'),0,2)            // dd
+        )
     )
 )
