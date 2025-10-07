@@ -1,29 +1,38 @@
-# controllers/pan_controller.py
-from flask import request, jsonify
+# models.py
+from pydantic import BaseModel, Field, constr
+
+class ClientData(BaseModel):
+    caseId: str = Field(..., description="Case ID")
+
+class PANRequest(BaseModel):
+    pan: constr(min_length=10, max_length=10) = Field(..., description="PAN number, exactly 10 characters")
+    lite: str = Field('Y', description="Lite flag")
+    consent: str = Field('Y', description="Consent flag")
+    clientData: ClientData
+
+
+
+
+
+from flask import request
 from flask_restful import Resource
-from services.pan_service import fetch_pan_details
-from models import PANRequest
 from pydantic import ValidationError
+from models import PANRequest
+from services.pan_service import fetch_pan_details
 
 class PANVerification(Resource):
     def post(self):
         try:
-            # Parse JSON body
             data = request.get_json()
-            
-            # Validate with Pydantic model
-            pan_request = PANRequest(**data)
+            pan_request = PANRequest(**data)  # validate with Pydantic
 
-            results = []
-            for item in pan_request.input_data:
-                result = fetch_pan_details(
-                    pan=item.pan,
-                    consent=item.consent,
-                    case_id=item.case_id
-                )
-                results.append(result)
+            result = fetch_pan_details(
+                pan=pan_request.pan,
+                consent=pan_request.consent,
+                case_id=pan_request.clientData.caseId
+            )
 
-            return jsonify({"results": results})
+            return result, 200
 
         except ValidationError as e:
-            return jsonify({"error": e.errors()})
+            return {"error": e.errors()}, 400
