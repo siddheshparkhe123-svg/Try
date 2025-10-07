@@ -1,68 +1,42 @@
-import requests
+from flask_restful import Resource, reqparse
+from services.pan_service import fetch_pan_details
 
-API_URL = "https://pan"                     # Replace with the real endpoint
-API_KEY = "your_api_key_here"               # Replace with your actual key
+class PANVerification(Resource):
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('pan', type=str, required=True, help="PAN number is required")
+        parser.add_argument('consent', type=str, default='Y')
+        parser.add_argument('case_id', type=str, default='123456')
+        
+        args = parser.parse_args()
 
-def call_pan_api(pan: str, consent: str) -> dict:
-    """
-    Makes the POST request to the external PAN API.
-    """
-    headers = {
-        "api-key": API_KEY,
-        "Content-Type": "application/json"
-    }
+        pan = args['pan']
+        consent = args['consent']
+        case_id = args['case_id']
 
-    payload = {
-        "pan": pan,
-        "consent": consent
-    }
-
-    response = requests.post(API_URL, headers=headers, json=payload)
-
-    if response.status_code == 200:
-        return response.json()
-    else:
-        raise Exception(f"API failed [{response.status_code}]: {response.text}")
-
-from clients.pan_client import call_pan_api
-
-def verify_pan(pan: str, consent: str) -> dict:
-    """
-    Business logic: validates input and calls the client.
-    """
-    if not pan:
-        raise ValueError("PAN cannot be empty")
-    
-    if consent not in ["Y", "N"]:
-        raise ValueError("Consent must be 'Y' or 'N'")
-    
-    return call_pan_api(pan, consent)
-
-
-
-from services.pan_service import verify_pan
-
-class PanController:
-    @staticmethod
-    def process_pan_request(pan: str, consent: str):
-        """
-        Controller method to handle incoming PAN verification request.
-        """
-        try:
-            result = verify_pan(pan, consent)
-            return {"status": "success", "data": result}
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
+        result = fetch_pan_details(pan, consent, case_id)
+        return result, 200
 
 
 
 
-from controllers.pan_controller import PanController
+
+
+from flask import Flask
+from flask_restful import Api
+from controllers.pan_controller import PANVerification
+
+def init():
+    app = Flask(__name__)
+    api = Api(app)
+
+    # Register the PAN verification endpoint
+    api.add_resource(PANVerification, '/verify_pan')
+
+    return app
+
+application = init()
 
 if __name__ == "__main__":
-    pan = "ABCDE1234F"     # sample PAN
-    consent = "Y"
-
-    response = PanController.process_pan_request(pan, consent)
-    print(response)
+    application.run(debug=True)
 
