@@ -1,42 +1,29 @@
-from flask_restful import Resource, reqparse
+# controllers/pan_controller.py
+from flask import request, jsonify
+from flask_restful import Resource
 from services.pan_service import fetch_pan_details
+from models import PANRequest
+from pydantic import ValidationError
 
 class PANVerification(Resource):
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('pan', type=str, required=True, help="PAN number is required")
-        parser.add_argument('consent', type=str, default='Y')
-        parser.add_argument('case_id', type=str, default='123456')
-        
-        args = parser.parse_args()
+        try:
+            # Parse JSON body
+            data = request.get_json()
+            
+            # Validate with Pydantic model
+            pan_request = PANRequest(**data)
 
-        pan = args['pan']
-        consent = args['consent']
-        case_id = args['case_id']
+            results = []
+            for item in pan_request.input_data:
+                result = fetch_pan_details(
+                    pan=item.pan,
+                    consent=item.consent,
+                    case_id=item.case_id
+                )
+                results.append(result)
 
-        result = fetch_pan_details(pan, consent, case_id)
-        return result, 200
+            return jsonify({"results": results})
 
-
-
-
-
-
-from flask import Flask
-from flask_restful import Api
-from controllers.pan_controller import PANVerification
-
-def init():
-    app = Flask(__name__)
-    api = Api(app)
-
-    # Register the PAN verification endpoint
-    api.add_resource(PANVerification, '/verify_pan')
-
-    return app
-
-application = init()
-
-if __name__ == "__main__":
-    application.run(debug=True)
-
+        except ValidationError as e:
+            return jsonify({"error": e.errors()})
